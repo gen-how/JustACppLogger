@@ -13,9 +13,8 @@ cd "build"
 
 cmake .. \
   -D CMAKE_EXPORT_COMPILE_COMMANDS=ON \
-  -D CMAKE_BUILD_TYPE="${BUILD_TYPE}"
-
-# Set cmake options like this:
-# -D OPTION_NAME=ON
+  -D CMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+  -D LOGGER_SRC_CODE_INFO=ON \
+  -D LOGGER_LOG_LEVEL=DEBUG
 
 make
