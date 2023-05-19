@@ -12,8 +12,6 @@
 #define LOG_LEVEL_ERROR 4
 #define LOG_LEVEL_FATAL 5
 
-#define SRC_CODE_INFO
-
 // Macro to get function signature.
 #if defined(_MSC_VER)
 #  define FUNC_SIG __FUNCSIG__
@@ -30,6 +28,66 @@
                      ##__VA_ARGS__))
 #  else
 #    define LOG_TRACE(message, ...) (Logger::Trace(message, ##__VA_ARGS__))
+#  endif
+#endif
+
+#if ENABLE_LOG_LEVEL > LOG_LEVEL_DEBUG
+#  define LOG_DEBUG(message, ...)
+#else
+#  if defined(SRC_CODE_INFO)
+#    define LOG_DEBUG(message, ...)                                         \
+      (Logger::Debug("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
+                     ##__VA_ARGS__))
+#  else
+#    define LOG_DEBUG(message, ...) (Logger::Debug(message, ##__VA_ARGS__))
+#  endif
+#endif
+
+#if ENABLE_LOG_LEVEL > LOG_LEVEL_INFO
+#  define LOG_INFO(message, ...)
+#else
+#  if defined(SRC_CODE_INFO)
+#    define LOG_INFO(message, ...)                                         \
+      (Logger::Info("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
+                    ##__VA_ARGS__))
+#  else
+#    define LOG_INFO(message, ...) (Logger::Info(message, ##__VA_ARGS__))
+#  endif
+#endif
+
+#if ENABLE_LOG_LEVEL > LOG_LEVEL_WARN
+#  define LOG_WARN(message, ...)
+#else
+#  if defined(SRC_CODE_INFO)
+#    define LOG_WARN(message, ...)                                         \
+      (Logger::Warn("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
+                    ##__VA_ARGS__))
+#  else
+#    define LOG_WARN(message, ...) (Logger::Warn(message, ##__VA_ARGS__))
+#  endif
+#endif
+
+#if ENABLE_LOG_LEVEL > LOG_LEVEL_ERROR
+#  define LOG_ERROR(message, ...)
+#else
+#  if defined(SRC_CODE_INFO)
+#    define LOG_ERROR(message, ...)                                         \
+      (Logger::Error("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
+                     ##__VA_ARGS__))
+#  else
+#    define LOG_ERROR(message, ...) (Logger::Error(message, ##__VA_ARGS__))
+#  endif
+#endif
+
+#if ENABLE_LOG_LEVEL > LOG_LEVEL_FATAL
+#  define LOG_FATAL(message, ...)
+#else
+#  if defined(SRC_CODE_INFO)
+#    define LOG_FATAL(message, ...)                                         \
+      (Logger::Fatal("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
+                     ##__VA_ARGS__))
+#  else
+#    define LOG_FATAL(message, ...) (Logger::Fatal(message, ##__VA_ARGS__))
 #  endif
 #endif
 
