@@ -17,3 +17,5 @@ cmake .. \
 
 # Set cmake options like this:
 # -D OPTION_NAME=ON
+
+make

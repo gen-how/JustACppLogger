@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(
-  "ProjectName"
+  "JustACppLogger"
   VERSION 0.0.1
   LANGUAGES CXX
 )
@@ -12,5 +12,5 @@ endif()
 
 # option(OPTION_NAME "Description" OFF)
 
-add_subdirectory(src)
+# add_subdirectory(src)
 add_subdirectory(app)
