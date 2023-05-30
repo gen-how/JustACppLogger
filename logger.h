@@ -5,12 +5,14 @@
 #include <ctime>
 #include <mutex>
 
+// clang-format off
 #define LOG_LEVEL_TRACE 0
 #define LOG_LEVEL_DEBUG 1
-#define LOG_LEVEL_INFO 2
-#define LOG_LEVEL_WARN 3
+#define LOG_LEVEL_INFO  2
+#define LOG_LEVEL_WARN  3
 #define LOG_LEVEL_ERROR 4
 #define LOG_LEVEL_FATAL 5
+// clang-format on
 
 // Macro to get function signature.
 #if defined(_MSC_VER)
@@ -19,81 +21,60 @@
 #  define FUNC_SIG __PRETTY_FUNCTION__
 #endif
 
+#if defined(SRC_CODE_INFO)
+#  define LOG_MSG(log_level, message, ...)                         \
+    (Logger::Log(log_level, __LINE__, __FILE__, FUNC_SIG, message, \
+                 ##__VA_ARGS__))
+#else
+#  define LOG_MSG(log_level, message, ...) \
+    (Logger::Log(log_level, message, ##__VA_ARGS__))
+#endif
+
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_TRACE
 #  define LOG_TRACE(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_TRACE(message, ...)                                         \
-      (Logger::Trace("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                     ##__VA_ARGS__))
-#  else
-#    define LOG_TRACE(message, ...) (Logger::Trace(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_TRACE(message, ...) \
+    (LOG_MSG(LogLevel::kTRACE, message, ##__VA_ARGS__))
 #endif
 
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_DEBUG
 #  define LOG_DEBUG(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_DEBUG(message, ...)                                         \
-      (Logger::Debug("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                     ##__VA_ARGS__))
-#  else
-#    define LOG_DEBUG(message, ...) (Logger::Debug(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_DEBUG(message, ...) \
+    (LOG_MSG(LogLevel::kDEBUG, message, ##__VA_ARGS__))
 #endif
 
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_INFO
 #  define LOG_INFO(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_INFO(message, ...)                                         \
-      (Logger::Info("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                    ##__VA_ARGS__))
-#  else
-#    define LOG_INFO(message, ...) (Logger::Info(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_INFO(message, ...) \
+    (LOG_MSG(LogLevel::kINFO, message, ##__VA_ARGS__))
 #endif
 
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_WARN
 #  define LOG_WARN(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_WARN(message, ...)                                         \
-      (Logger::Warn("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                    ##__VA_ARGS__))
-#  else
-#    define LOG_WARN(message, ...) (Logger::Warn(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_WARN(message, ...) \
+    (LOG_MSG(LogLevel::kWARN, message, ##__VA_ARGS__))
 #endif
 
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_ERROR
 #  define LOG_ERROR(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_ERROR(message, ...)                                         \
-      (Logger::Error("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                     ##__VA_ARGS__))
-#  else
-#    define LOG_ERROR(message, ...) (Logger::Error(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_ERROR(message, ...) \
+    (LOG_MSG(LogLevel::kERROR, message, ##__VA_ARGS__))
 #endif
 
 #if ENABLE_LOG_LEVEL > LOG_LEVEL_FATAL
 #  define LOG_FATAL(message, ...)
 #else
-#  if defined(SRC_CODE_INFO)
-#    define LOG_FATAL(message, ...)                                         \
-      (Logger::Fatal("[%s:%d] [%s] " message, __FILE__, __LINE__, FUNC_SIG, \
-                     ##__VA_ARGS__))
-#  else
-#    define LOG_FATAL(message, ...) (Logger::Fatal(message, ##__VA_ARGS__))
-#  endif
+#  define LOG_FATAL(message, ...) \
+    (LOG_MSG(LogLevel::kFATAL, message, ##__VA_ARGS__))
 #endif
 
 constexpr int kTimeStrSize = 128;
 
-enum class LogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL };
+enum class LogLevel { kTRACE, kDEBUG, kINFO, kWARN, kERROR, kFATAL };
 
 /**
  * @brief A singleton logger class.
@@ -126,21 +107,30 @@ private:
 
   const char* GetLogLevelStr(LogLevel log_level) {
     switch (log_level) {
-      case LogLevel::TRACE:
+      case LogLevel::kTRACE:
         return "TRACE";
-      case LogLevel::DEBUG:
+      case LogLevel::kDEBUG:
         return "DEBUG";
-      case LogLevel::INFO:
+      case LogLevel::kINFO:
         return " INFO";
-      case LogLevel::WARN:
+      case LogLevel::kWARN:
         return " WARN";
-      case LogLevel::ERROR:
+      case LogLevel::kERROR:
         return "ERROR";
-      case LogLevel::FATAL:
+      case LogLevel::kFATAL:
         return "FATAL";
+      default:
+        return "     ";  // To avoid warning given by gcc.
     }
   }
 
+  /**
+   * @brief Logs a message with the given custom message.
+   *
+   * @param log_level Log level. (e.g. LogLevel::kINFO)
+   * @param message Custom message to log.
+   * @param args Arguments for the custom message.
+   */
   template <typename... Args>
   void LogImpl(LogLevel log_level, const char* message, Args... args) {
     UpdateTimeStr();
@@ -152,39 +142,51 @@ private:
 #pragma clang diagnostic pop
   }
 
+  /**
+   * @brief Logs a message with the given line number, filepath, function
+   *        signature, and custom message.
+   *
+   * @param log_level Log level. (e.g. LogLevel::kINFO)
+   * @param line Line number.
+   * @param filepath Source code filepath.
+   * @param func_sig Function signature.
+   * @param message Custom message to log.
+   * @param args Arguments for the custom message.
+   */
+  template <typename... Args>
+  void LogImpl(LogLevel log_level, int line, const char* filepath,
+               const char* func_sig, const char* message, Args... args) {
+    UpdateTimeStr();
+    printf(
+        "[%s] "     // Timestamp.
+        "[%s] "     // Log level.
+        "[%s:%d] "  // Filepath and line number.
+        "[%s] ",    // Function signature.
+        time_str_, GetLogLevelStr(log_level), filepath, line, func_sig);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
+    printf(message, args...);  // Custom message.
+    puts("");                  // New line.
+#pragma clang diagnostic pop
+  }
+
 public:
   ~Logger() {}
   Logger(const Logger&) = delete;
   Logger& operator=(const Logger&) = delete;
 
   template <typename... Args>
-  static inline void Trace(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::TRACE, message, args...);
+  static inline void Log(LogLevel log_level, const char* message,
+                         Args... args) {
+    GetInstance().LogImpl(log_level, message, args...);
   }
 
   template <typename... Args>
-  static inline void Debug(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::DEBUG, message, args...);
-  }
-
-  template <typename... Args>
-  static inline void Info(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::INFO, message, args...);
-  }
-
-  template <typename... Args>
-  static inline void Warn(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::WARN, message, args...);
-  }
-
-  template <typename... Args>
-  static inline void Error(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::ERROR, message, args...);
-  }
-
-  template <typename... Args>
-  static inline void Fatal(const char* message, Args... args) {
-    GetInstance().LogImpl(LogLevel::FATAL, message, args...);
+  static inline void Log(LogLevel log_level, int line, const char* filepath,
+                         const char* func_sig, const char* message,
+                         Args... args) {
+    GetInstance().LogImpl(log_level, line, filepath, func_sig, message,
+                          args...);
   }
 };
 
