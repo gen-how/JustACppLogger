@@ -13,6 +13,9 @@
 CMakeCache.*
 CMakeFiles
 
+# clangd cache
+.cache
+
 # OS cache
 .DS_Store
 Thumbs.db
