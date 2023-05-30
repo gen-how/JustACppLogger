@@ -5,12 +5,14 @@
 #include <ctime>
 #include <mutex>
 
+// clang-format off
 #define LOG_LEVEL_TRACE 0
 #define LOG_LEVEL_DEBUG 1
-#define LOG_LEVEL_INFO 2
-#define LOG_LEVEL_WARN 3
+#define LOG_LEVEL_INFO  2
+#define LOG_LEVEL_WARN  3
 #define LOG_LEVEL_ERROR 4
 #define LOG_LEVEL_FATAL 5
+// clang-format on
 
 // Macro to get function signature.
 #if defined(_MSC_VER)
@@ -155,10 +157,14 @@ private:
   void LogImpl(LogLevel log_level, int line, const char* filepath,
                const char* func_sig, const char* message, Args... args) {
     UpdateTimeStr();
+    printf(
+        "[%s] "     // Timestamp.
+        "[%s] "     // Log level.
+        "[%s:%d] "  // Filepath and line number.
+        "[%s] ",    // Function signature.
+        time_str_, GetLogLevelStr(log_level), filepath, line, func_sig);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"
-    printf("[%s] [%s] [%s:%d] [%s] ", time_str_, GetLogLevelStr(log_level),
-           filepath, line, func_sig);
     printf(message, args...);  // Custom message.
     puts("");                  // New line.
 #pragma clang diagnostic pop
