@@ -98,7 +98,7 @@ private:
     time_t now = time(nullptr);
     struct tm local_now;
 #if defined(_WIN32)
-    localtime_s(&now, &local_now);
+    localtime_s(&local_now, &now);
 #else
     localtime_r(&now, &local_now);
 #endif
@@ -124,6 +124,12 @@ private:
     }
   }
 
+// Disable format-security warning given by clang.
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wformat-security"
+#endif
+
   /**
    * @brief Logs a message with the given custom message.
    *
@@ -134,12 +140,9 @@ private:
   template <typename... Args>
   void LogImpl(LogLevel log_level, const char* message, Args... args) {
     UpdateTimeStr();
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-security"
     printf("[%s] [%s] ", time_str_, GetLogLevelStr(log_level));
     printf(message, args...);  // Custom message.
     puts("");                  // New line.
-#pragma clang diagnostic pop
   }
 
   /**
@@ -158,17 +161,19 @@ private:
                const char* func_sig, const char* message, Args... args) {
     UpdateTimeStr();
     printf(
-        "[%s] "     // Timestamp.
-        "[%s] "     // Log level.
-        "[%s:%d] "  // Filepath and line number.
-        "[%s] ",    // Function signature.
+        "[%s] "                // Timestamp.
+        "[%s] "                // Log level.
+        "[%s:%d] "             // Filepath and line number.
+        "[%s] ",               // Function signature.
         time_str_, GetLogLevelStr(log_level), filepath, line, func_sig);
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-security"
     printf(message, args...);  // Custom message.
     puts("");                  // New line.
-#pragma clang diagnostic pop
   }
+
+// Restore format-security warning given by clang.
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 public:
   ~Logger() {}
